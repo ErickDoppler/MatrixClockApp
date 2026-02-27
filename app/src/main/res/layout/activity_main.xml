@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.matrixclock.MatrixCodeView
+        android:id="@+id/matrixView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <com.matrixclock.ClockView
+        android:id="@+id/clockView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"/>
+</FrameLayout>
