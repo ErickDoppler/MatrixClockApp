@@ -4,6 +4,7 @@ plugins {
 }
 
 android {
+    namespace 'com.matrixclock'
     compileSdk 34
 
     defaultConfig {
@@ -12,12 +13,15 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0"
-        resourceConfigurations += ["en"]
     }
     buildTypes {
         release {
             minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 }
 
