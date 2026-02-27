@@ -1,0 +1,2 @@
+rootProject.name = 'MatrixClockApp'
+include ':app'
