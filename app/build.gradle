@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace 'com.matrixclock'
+    namespace 'com.example.matrixclock'   // ← Add this line!
     compileSdk 34
 
     defaultConfig {

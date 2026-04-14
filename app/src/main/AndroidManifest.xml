@@ -1,19 +1,19 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.matrixclock">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
-        android:label="MatrixClock"
-        android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen">
+        android:label="Matrix Clock"
+        android:theme="@style/Theme.MatrixClock"
+        android:allowBackup="true">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:screenOrientation="portrait"
-            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
-            android:windowSoftInputMode="stateAlwaysHidden">
+            android:screenOrientation="sensorLandscape">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
     </application>
 </manifest>
