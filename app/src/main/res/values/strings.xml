@@ -1,3 +1,28 @@
 <resources>
-    <string name="app_name">MatrixClock</string>
+    <string name="app_name">Matrix Clock</string>
+
+    <string name="settings_title">MATRIX CLOCK // SETTINGS</string>
+    <string name="section_rain">RAIN</string>
+    <string name="section_clock">CLOCK</string>
+    <string name="section_motion">MOTION</string>
+    <string name="section_voice">VOICE</string>
+
+    <string name="glyph_size">Glyph size</string>
+    <string name="glyph_density">Glyph density</string>
+    <string name="glyph_speed">Glyph speed</string>
+    <string name="clock_size">Clock size</string>
+
+    <string name="motion_enabled">Motion detection: %1$s</string>
+    <string name="motion_hint">While charging, the front camera watches for movement and the clock
+        fades out after a minute of stillness. Frames never leave the device. Switch this off and
+        the clock simply stays visible.</string>
+
+    <string name="tts_engine">Speech engine</string>
+    <string name="tts_voice">Voice</string>
+    <string name="tts_rate">Voice speed</string>
+    <string name="test_voice">Test voice</string>
+    <string name="install_engine">Install bundled offline engine</string>
+    <string name="voice_hint">Say \"time\" to hear the clock, \"matrix\" or \"code\" to hide it, or
+        double clap to show it for a minute. Recognition runs offline.</string>
+    <string name="done">Done</string>
 </resources>

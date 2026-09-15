@@ -1,0 +1,21 @@
+# Build output
+build/
+app/build/
+.gradle/
+*.apk
+*.aab
+*.ap_
+*.dex
+local.properties
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+captures/
+
+# Large build assets — not in git. See README.md for how to fetch them.
+# Vosk speech model (~68 MB unpacked)
+app/src/main/assets/model-en-us/
+# sherpa-onnx TTS engine, bundled only into the arm64 "full" flavour (~85 MB)
+app/src/full/assets/sherpa-onnx-tts-engine.apk

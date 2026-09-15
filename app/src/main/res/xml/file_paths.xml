@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Where the bundled TTS engine APK is staged before handing it to the package installer. -->
+    <cache-path name="installers" path="installers/"/>
+</paths>

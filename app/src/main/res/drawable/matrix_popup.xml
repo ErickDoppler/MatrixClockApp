@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Spinner dropdowns default to a white OEM background, which fights the rest of the screen. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#FF04100A"/>
+    <stroke android:width="1dp" android:color="@color/matrix_green"/>
+</shape>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark control background so buttons and spinners match the rest of the screen. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#FF10331A"/>
+            <stroke android:width="1dp" android:color="@color/matrix_green"/>
+            <corners android:radius="2dp"/>
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FF06140B"/>
+            <stroke android:width="1dp" android:color="@color/matrix_green_dim"/>
+            <corners android:radius="2dp"/>
+        </shape>
+    </item>
+</selector>
