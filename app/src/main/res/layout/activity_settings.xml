@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/matrix_background"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="32dp">
+
+        <TextView
+            style="@style/MatrixTitle"
+            android:text="@string/settings_title"/>
+
+        <!-- Rain -->
+        <TextView style="@style/MatrixSection" android:text="@string/section_rain"/>
+
+        <TextView style="@style/MatrixLabel" android:text="@string/glyph_size"/>
+        <TextView android:id="@+id/glyphSizeValue" style="@style/MatrixValue"/>
+        <SeekBar android:id="@+id/glyphSizeBar" style="@style/MatrixSeek"/>
+
+        <TextView style="@style/MatrixLabel" android:text="@string/glyph_density"/>
+        <TextView android:id="@+id/glyphDensityValue" style="@style/MatrixValue"/>
+        <SeekBar android:id="@+id/glyphDensityBar" style="@style/MatrixSeek"/>
+
+        <TextView style="@style/MatrixLabel" android:text="@string/glyph_speed"/>
+        <TextView android:id="@+id/glyphSpeedValue" style="@style/MatrixValue"/>
+        <SeekBar android:id="@+id/glyphSpeedBar" style="@style/MatrixSeek"/>
+
+        <!-- Clock -->
+        <TextView style="@style/MatrixSection" android:text="@string/section_clock"/>
+
+        <TextView style="@style/MatrixLabel" android:text="@string/clock_size"/>
+        <TextView android:id="@+id/clockSizeValue" style="@style/MatrixValue"/>
+        <SeekBar android:id="@+id/clockSizeBar" style="@style/MatrixSeek"/>
+
+        <!-- Motion -->
+        <TextView style="@style/MatrixSection" android:text="@string/section_motion"/>
+
+        <!-- A plain Button rather than a Switch: OEM switch drawables render dark-on-dark here,
+             and this way the control is styled entirely by us and always visible. -->
+        <Button
+            android:id="@+id/motionToggle"
+            style="@style/MatrixButton"
+            android:layout_marginTop="4dp"/>
+
+        <TextView style="@style/MatrixHint" android:text="@string/motion_hint"/>
+
+        <!-- Voice -->
+        <TextView style="@style/MatrixSection" android:text="@string/section_voice"/>
+
+        <TextView style="@style/MatrixLabel" android:text="@string/tts_engine"/>
+        <Spinner
+            android:id="@+id/engineSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/matrix_control"
+            android:popupBackground="@drawable/matrix_popup"/>
+
+        <TextView style="@style/MatrixLabel" android:text="@string/tts_voice"/>
+        <Spinner
+            android:id="@+id/voiceSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/matrix_control"
+            android:popupBackground="@drawable/matrix_popup"/>
+
+        <TextView style="@style/MatrixLabel" android:text="@string/tts_rate"/>
+        <TextView android:id="@+id/voiceRateValue" style="@style/MatrixValue"/>
+        <SeekBar android:id="@+id/voiceRateBar" style="@style/MatrixSeek"/>
+
+        <Button
+            android:id="@+id/testVoiceButton"
+            style="@style/MatrixButton"
+            android:text="@string/test_voice"/>
+
+        <Button
+            android:id="@+id/installEngineButton"
+            style="@style/MatrixButton"
+            android:text="@string/install_engine"/>
+
+        <TextView
+            android:id="@+id/voiceHint"
+            style="@style/MatrixHint"
+            android:text="@string/voice_hint"/>
+
+        <Button
+            android:id="@+id/doneButton"
+            style="@style/MatrixButton"
+            android:layout_marginTop="24dp"
+            android:text="@string/done"/>
+
+    </LinearLayout>
+</ScrollView>

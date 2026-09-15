@@ -1,4 +1,79 @@
-
 <resources>
     <style name="Theme.MatrixClock" parent="android:Theme.Black.NoTitleBar.Fullscreen"/>
+
+    <!-- Settings keeps the system bars, but painted black so they do not glare. -->
+    <style name="Theme.MatrixClock.Settings" parent="android:Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@color/matrix_background</item>
+        <item name="android:statusBarColor">@color/matrix_background</item>
+        <item name="android:navigationBarColor">@color/matrix_background</item>
+        <!-- Without this the parent theme ignores the bar colours entirely. -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:colorAccent">@color/matrix_green</item>
+    </style>
+
+    <style name="MatrixTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/matrix_green</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:typeface">monospace</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:paddingBottom">8dp</item>
+    </style>
+
+    <style name="MatrixSection">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/matrix_green_dim</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:typeface">monospace</item>
+        <item name="android:layout_marginTop">24dp</item>
+        <item name="android:paddingBottom">4dp</item>
+    </style>
+
+    <style name="MatrixLabel">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/matrix_green</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:layout_marginTop">12dp</item>
+    </style>
+
+    <style name="MatrixValue">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/matrix_green_dim</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:typeface">monospace</item>
+    </style>
+
+    <style name="MatrixHint">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/matrix_green_dim</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:lineSpacingMultiplier">1.2</item>
+    </style>
+
+    <style name="MatrixSeek">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:max">100</item>
+        <item name="android:progressTint">@color/matrix_green</item>
+        <item name="android:progressBackgroundTint">@color/matrix_green_dim</item>
+        <item name="android:thumbTint">@color/matrix_green</item>
+        <item name="android:layout_marginTop">4dp</item>
+    </style>
+
+    <style name="MatrixButton">
+        <item name="android:background">@drawable/matrix_control</item>
+        <item name="android:paddingTop">14dp</item>
+        <item name="android:paddingBottom">14dp</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">12dp</item>
+        <item name="android:textColor">@color/matrix_green</item>
+        <item name="android:typeface">monospace</item>
+    </style>
 </resources>

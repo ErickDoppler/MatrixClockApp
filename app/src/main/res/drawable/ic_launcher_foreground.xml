@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Clock ring and hands, kept inside the 72dp safe zone so no mask can clip them. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Soft glow behind the dial so the ring stays readable over the rain. -->
+    <path
+        android:fillColor="#99000000"
+        android:pathData="M54,28a26,26 0 1,0 0.1,0z"/>
+
+    <!-- Dial -->
+    <path
+        android:strokeColor="#FF00FF41"
+        android:strokeWidth="5"
+        android:fillColor="#00000000"
+        android:pathData="M54,30a24,24 0 1,0 0.1,0z"/>
+
+    <!-- Hour markers at 12, 3, 6, 9 -->
+    <path android:fillColor="#FF00FF41" android:pathData="M52.5,35h3v6h-3z"/>
+    <path android:fillColor="#FF00FF41" android:pathData="M67,52.5h6v3h-6z"/>
+    <path android:fillColor="#FF00FF41" android:pathData="M52.5,67h3v6h-3z"/>
+    <path android:fillColor="#FF00FF41" android:pathData="M35,52.5h6v3h-6z"/>
+
+    <!-- Hands: 10:10, the classic display setting -->
+    <path
+        android:strokeColor="#FF7CFFA8"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,54L43,45"/>
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,54L66,45"/>
+
+    <path android:fillColor="#FFFFFFFF" android:pathData="M54,50.5a3.5,3.5 0 1,0 0.1,0z"/>
+</vector>

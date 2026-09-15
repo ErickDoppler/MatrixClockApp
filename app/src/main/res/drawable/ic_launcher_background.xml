@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Code rain. Full-bleed, so it can be safely cropped by any adaptive-icon mask. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path android:fillColor="#FF01140A" android:pathData="M0,0h108v108h-108z"/>
+
+    <!-- Column 1 -->
+    <path android:fillColor="#3300FF41" android:pathData="M8,10h7v5h-7z"/>
+    <path android:fillColor="#5500FF41" android:pathData="M8,19h7v5h-7z"/>
+    <path android:fillColor="#8800FF41" android:pathData="M8,28h7v5h-7z"/>
+    <path android:fillColor="#CC00FF41" android:pathData="M8,37h7v5h-7z"/>
+
+    <!-- Column 2 -->
+    <path android:fillColor="#2200FF41" android:pathData="M22,44h7v5h-7z"/>
+    <path android:fillColor="#4400FF41" android:pathData="M22,53h7v5h-7z"/>
+    <path android:fillColor="#7700FF41" android:pathData="M22,62h7v5h-7z"/>
+    <path android:fillColor="#BB00FF41" android:pathData="M22,71h7v5h-7z"/>
+    <path android:fillColor="#FF7CFFA8" android:pathData="M22,80h7v5h-7z"/>
+
+    <!-- Column 3 -->
+    <path android:fillColor="#3300FF41" android:pathData="M36,4h7v5h-7z"/>
+    <path android:fillColor="#6600FF41" android:pathData="M36,13h7v5h-7z"/>
+    <path android:fillColor="#AA00FF41" android:pathData="M36,22h7v5h-7z"/>
+
+    <!-- Column 4 -->
+    <path android:fillColor="#2200FF41" android:pathData="M50,86h7v5h-7z"/>
+    <path android:fillColor="#5500FF41" android:pathData="M50,95h7v5h-7z"/>
+
+    <!-- Column 5 -->
+    <path android:fillColor="#3300FF41" android:pathData="M64,8h7v5h-7z"/>
+    <path android:fillColor="#5500FF41" android:pathData="M64,17h7v5h-7z"/>
+    <path android:fillColor="#9900FF41" android:pathData="M64,26h7v5h-7z"/>
+    <path android:fillColor="#E600FF41" android:pathData="M64,35h7v5h-7z"/>
+
+    <!-- Column 6 -->
+    <path android:fillColor="#2200FF41" android:pathData="M78,58h7v5h-7z"/>
+    <path android:fillColor="#5500FF41" android:pathData="M78,67h7v5h-7z"/>
+    <path android:fillColor="#9900FF41" android:pathData="M78,76h7v5h-7z"/>
+    <path android:fillColor="#FF7CFFA8" android:pathData="M78,85h7v5h-7z"/>
+
+    <!-- Column 7 -->
+    <path android:fillColor="#3300FF41" android:pathData="M92,30h7v5h-7z"/>
+    <path android:fillColor="#6600FF41" android:pathData="M92,39h7v5h-7z"/>
+    <path android:fillColor="#AA00FF41" android:pathData="M92,48h7v5h-7z"/>
+</vector>
