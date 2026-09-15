@@ -140,12 +140,14 @@ and a clap or `matrix time` brings it back.
 
 Requirements: JDK 17, Android SDK with API 34, and `curl` + `unzip` on PATH.
 
-Two flavours exist because the bundled TTS engine is an **arm64-only APK**. Shipping it to a 32-bit
-device would add ~82 MB that could never be installed there.
+Two flavours exist because the two architectures need different speech engines. sherpa-onnx sounds
+far better, but its 32-bit build is still ~80 MB — almost all of it the ONNX runtime rather than the
+voice — which would more than double the size of the 32-bit APK. So the legacy flavour carries
+eSpeak NG instead: robotic, but ~10 MB and it runs anywhere.
 
 ```bash
-./build-new-device.sh      # arm64-v8a,   ~133 MB, TTS engine bundled
-./build-old-device.sh      # armeabi-v7a, ~51 MB,  no bundled engine
+./build-new-device.sh      # arm64-v8a,   ~133 MB, sherpa-onnx engine bundled
+./build-old-device.sh      # armeabi-v7a,  ~61 MB, eSpeak NG engine bundled
 ```
 
 Both scripts download any missing build assets first, so a fresh clone builds with no manual setup.
@@ -173,22 +175,26 @@ which keeps clones small. `fetch-assets.sh` downloads them and is invoked automa
 build scripts; it is idempotent, so anything already present is left alone.
 
 ```bash
-./fetch-assets.sh                     # Vosk model only
-./fetch-assets.sh --with-tts-engine   # also the sherpa-onnx engine
+./fetch-assets.sh          # Vosk model only
+./fetch-assets.sh full     # also the arm64 sherpa-onnx engine
+./fetch-assets.sh legacy   # also the 32-bit eSpeak NG engine
 ```
 
 | Asset | Size | Destination | Needed by |
 |---|---|---|---|
 | Vosk small English model | ~39 MB download, 68 MB unpacked | `app/src/main/assets/model-en-us/` | both flavours |
-| sherpa-onnx TTS engine APK | ~84 MB | `app/src/full/assets/sherpa-onnx-tts-engine.apk` | `full` only |
+| sherpa-onnx TTS engine APK | ~80 MB | `app/src/full/assets/tts-engine.apk` | `full` only |
+| eSpeak NG TTS engine APK | ~10 MB | `app/src/legacy/assets/tts-engine.apk` | `legacy` only |
 
 The Vosk model directory must contain `am/`, `conf/`, `graph/` and `ivector/`. Any other Vosk model
 works if you keep the same folder name — see [alphacephei.com/vosk/models](https://alphacephei.com/vosk/models).
 
-The TTS engine is bundled so a device with no speech engine of its own can install one entirely
-offline, from inside the app's settings screen. If the file is absent the `full` flavour still
-builds and runs: `TtsEngineInstaller.isBundled()` detects it at runtime and the settings screen
-hides the install option.
+A TTS engine is bundled so a device with no speech engine of its own can install one entirely
+offline, from inside the app's settings screen. Which engine is decided per flavour by the
+`BUNDLED_TTS_PACKAGE` build-config field.
+
+If the file is absent the build still succeeds and runs: `TtsEngineInstaller.isBundled()` detects it
+at runtime and the settings screen simply hides the install option.
 
 ---
 
@@ -231,9 +237,11 @@ needed either way. The rules compose in order:
 - **Permissions:** camera (motion detection), microphone (clap and voice), coarse location
   (sunrise/sunset and weather), internet (weather only). All are requested once at first launch and
   every feature degrades gracefully if denied.
-- **Speech output needs a TTS engine on the device.** Most phones ship one. If not, the arm64 build
-  can install the bundled sherpa-onnx engine from its settings screen. On a 32-bit device you must
-  install any TTS engine yourself — wake words are still recognised, they just are not spoken back.
+- **Speech output needs a TTS engine on the device.** Most phones ship one; if not, either build can
+  install its bundled engine from the settings screen — sherpa-onnx on arm64, eSpeak NG on 32-bit.
+- **A device that never had an engine leaves `tts_default_synth` unset**, and in that state Android's
+  no-engine `TextToSpeech` constructor fails to initialise even once an engine is installed. The app
+  detects this and names an installed engine explicitly; a valid system default is always left alone.
 - **Onboard sensors vary widely.** Many phones have a barometer and nothing else; a good number
   have none at all. `matrix weather` reports whatever is actually present and omits the rest.
 - The app is landscape (`sensorLandscape`) and immersive, and holds the screen on only while
@@ -294,7 +302,8 @@ app/src/main/java/com/example/matrixclock/
 ## Credits and licences
 
 - [Vosk](https://alphacephei.com/vosk/) — offline speech recognition (Apache-2.0)
-- [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) — offline TTS engine (Apache-2.0)
+- [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) — offline TTS engine, arm64 build (Apache-2.0)
+- [eSpeak NG](https://github.com/espeak-ng/espeak-ng) — offline TTS engine, 32-bit build (GPL-3.0)
 - [Open-Meteo](https://open-meteo.com/) — free weather API, no key required (CC-BY-4.0)
 - [CameraX](https://developer.android.com/training/camerax) — camera frame analysis (Apache-2.0)
 

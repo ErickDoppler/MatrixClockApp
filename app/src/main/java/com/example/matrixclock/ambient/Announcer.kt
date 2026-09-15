@@ -40,11 +40,19 @@ class Announcer(
     /** "Today is Monday, 15 September. Sunrise at 6:42, sunset at 19:05." */
     fun announceDate() {
         val now = System.currentTimeMillis()
-        val dateText = SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date(now))
+        // The sentence around it is English, so the date has to be too: on a device set to another
+        // locale, Locale.getDefault() produced "Today is вівторок, 15 вересня".
+        val dateText = SimpleDateFormat("EEEE, d MMMM", Locale.ENGLISH).format(Date(now))
         val location = lastKnownLocation()
 
         if (location == null) {
-            speaker.speak("Today is $dateText. I need location access for sunrise and sunset.")
+            // Distinguish "not allowed" from "allowed but no fix yet" — they need different fixes.
+            val why = if (hasLocationPermission()) {
+                "I do not have a location fix yet."
+            } else {
+                "I need location access for sunrise and sunset."
+            }
+            speaker.speak("Today is $dateText. $why")
             return
         }
 
@@ -68,10 +76,12 @@ class Announcer(
         sensors.read { reading ->
             if (location == null) {
                 val onboard = describeOnboard(reading)
-                speaker.speak(
-                    if (onboard.isEmpty()) "I need location access to report the weather."
-                    else "I need location access for the forecast. $onboard"
-                )
+                val why = if (hasLocationPermission()) {
+                    "I do not have a location fix yet, so I cannot get the forecast."
+                } else {
+                    "I need location access for the forecast."
+                }
+                speaker.speak(if (onboard.isEmpty()) why else "$why $onboard")
                 return@read
             }
             executor.execute {
@@ -122,12 +132,12 @@ class Announcer(
         return "${calendar.get(Calendar.HOUR_OF_DAY)}:${"%02d".format(minute)}"
     }
 
+    private fun hasLocationPermission(): Boolean =
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+
     private fun lastKnownLocation(): Location? {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            return null
-        }
+        if (!hasLocationPermission()) return null
         val manager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
             ?: return null
         return try {

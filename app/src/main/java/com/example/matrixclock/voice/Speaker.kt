@@ -1,6 +1,7 @@
 package com.example.matrixclock.voice
 
 import android.content.Context
+import android.provider.Settings as AndroidSettings
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
 import android.util.Log
@@ -30,21 +31,47 @@ class Speaker(private val context: Context, private val settings: Settings) {
     /** True once an engine has initialised; false means nothing on this device can speak. */
     fun start(onReady: (Boolean) -> Unit = {}) {
         if (tts != null) return
-        val engine = settings.ttsEngine
+        val engine = resolveEngine()
         val listener = TextToSpeech.OnInitListener { status ->
             isReady = status == TextToSpeech.SUCCESS
             if (isReady) {
                 applyVoiceSettings()
             } else {
-                Log.w(TAG, "TTS init failed (status=$status)")
+                Log.w(TAG, "TTS init failed (status=$status, engine=${engine ?: "system default"})")
             }
             onReady(isReady)
         }
-        tts = if (engine.isNullOrEmpty()) {
+        Log.i(TAG, "Starting TTS with engine=${engine ?: "system default"}")
+        tts = if (engine == null) {
             TextToSpeech(context, listener)
         } else {
             TextToSpeech(context, listener, engine)
         }
+    }
+
+    /**
+     * Which engine package to hand to [TextToSpeech], or null to let it use the system default.
+     *
+     * A device that has never had a speech engine leaves `tts_default_synth` unset, and in that
+     * state the no-engine constructor fails to initialise even when an engine is installed — so an
+     * engine has to be named explicitly. This is the normal case on a phone that shipped without
+     * Google TTS and then had one sideloaded.
+     */
+    private fun resolveEngine(): String? {
+        settings.ttsEngine?.takeIf { it.isNotEmpty() }?.let { return it }
+
+        val installed = TtsEngineInstaller.installedEngines(context)
+        if (installed.isEmpty()) return null
+
+        val systemDefault = runCatching {
+            AndroidSettings.Secure.getString(context.contentResolver, "tts_default_synth")
+        }.getOrNull()
+
+        // A valid system default is the user's own choice, so leave it alone.
+        if (!systemDefault.isNullOrEmpty() && installed.contains(systemDefault)) return null
+
+        Log.i(TAG, "No usable system TTS default; falling back to ${installed.first()}")
+        return installed.first()
     }
 
     /** Re-applies voice and rate after the user changes them in settings. */

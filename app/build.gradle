@@ -23,11 +23,15 @@ android {
         full {
             dimension 'abi'
             ndk { abiFilters 'arm64-v8a' }
+            // sherpa-onnx: high quality, arm64 only, ~80 MB.
+            buildConfigField 'String', 'BUNDLED_TTS_PACKAGE', '"com.k2fsa.sherpa.onnx.tts.engine"'
         }
         legacy {
             dimension 'abi'
             versionNameSuffix '-legacy'
             ndk { abiFilters 'armeabi-v7a' }
+            // eSpeak NG: robotic but tiny (~10 MB) and runs on 32-bit hardware.
+            buildConfigField 'String', 'BUNDLED_TTS_PACKAGE', '"com.reecedunn.espeak"'
         }
     }
 

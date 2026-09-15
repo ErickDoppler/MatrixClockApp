@@ -22,7 +22,7 @@ esac
 cd "$(dirname "$0")"
 
 # Pull the Vosk model and the bundled TTS engine if they are not already here.
-./fetch-assets.sh --with-tts-engine
+./fetch-assets.sh full
 
 echo "Building arm64-v8a ($BUILD_TYPE), with bundled TTS engine..."
 ./gradlew "$TASK"

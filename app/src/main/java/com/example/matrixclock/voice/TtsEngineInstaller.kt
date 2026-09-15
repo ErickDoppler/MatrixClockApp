@@ -6,21 +6,24 @@ import android.net.Uri
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.core.content.FileProvider
+import com.example.matrixclock.BuildConfig
 import java.io.File
 import java.io.FileOutputStream
 
 /**
  * Offers the bundled open-source TTS engine when the device has none of its own.
  *
- * Many devices ship without Google TTS, so the sherpa-onnx engine (Apache-2.0, fully offline) rides
- * along inside our APK. It is staged to cache and handed to the system package installer, which
- * shows the user the normal install prompt — nothing is installed silently.
+ * Many devices ship without Google TTS, so an offline engine rides along inside our APK —
+ * sherpa-onnx on arm64, eSpeak NG on 32-bit hardware, since sherpa's 32-bit build is ~80 MB where
+ * eSpeak is ~10 MB. The APK is staged to cache and handed to the system package installer, which
+ * shows the user the normal install prompt; nothing is installed silently.
  */
 object TtsEngineInstaller {
 
     private const val TAG = "TtsEngineInstaller"
-    private const val ASSET = "sherpa-onnx-tts-engine.apk"
-    const val ENGINE_PACKAGE = "com.k2fsa.sherpa.onnx.tts.engine"
+    private const val ASSET = "tts-engine.apk"
+    /** Which engine this flavour carries: sherpa-onnx on arm64, eSpeak NG on 32-bit. */
+    val ENGINE_PACKAGE: String = BuildConfig.BUNDLED_TTS_PACKAGE
 
     /** Engine packages that can currently serve TTS_SERVICE. */
     fun installedEngines(context: Context): List<String> {
