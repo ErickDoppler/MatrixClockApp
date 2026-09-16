@@ -11,8 +11,81 @@ Everything except the weather forecast works with no network connection at all.
 
 ---
 
+## Quick start
+
+You need **JDK 17**, the **Android SDK** (API 34), and `curl` + `unzip` on PATH. Nothing else —
+the build scripts download the speech model and TTS engine themselves on first run (~50–120 MB,
+once).
+
+Pick the build that matches your device. If you are unsure, check with
+`adb shell getprop ro.product.cpu.abilist`:
+
+| Device | Script | APK |
+|---|---|---|
+| 64-bit, anything from the last decade | `build-new-device.sh` | ~132 MB |
+| 32-bit, `armeabi-v7a` only | `build-old-device.sh` | ~61 MB |
+
+### Windows
+
+**1. Create `local.properties` in the project root**, pointing at your Android SDK:
+
+```properties
+sdk.dir=C:/Users/<you>/AppData/Local/Android/Sdk
+```
+
+**2. Build.** Git for Windows puts `bash` on PATH, so run the script from PowerShell or CMD:
+
+```
+bash ./build-new-device.sh
+```
+
+**3. Install onto a connected device:**
+
+```
+adb install -r app/build/outputs/apk/full/debug/app-full-debug.apk
+```
+
+### Linux
+
+**1. Tell Gradle where the SDK is** — either create `local.properties`:
+
+```properties
+sdk.dir=/home/<you>/Android/Sdk
+```
+
+or export it in your shell instead:
+
+```
+export ANDROID_HOME=$HOME/Android/Sdk
+```
+
+**2. Build:**
+
+```
+./build-new-device.sh
+```
+
+**3. Install onto a connected device:**
+
+```
+adb install -r app/build/outputs/apk/full/debug/app-full-debug.apk
+```
+
+### Notes
+
+- For a 32-bit device use `build-old-device.sh` and install
+  `app/build/outputs/apk/legacy/debug/app-legacy-debug.apk` instead.
+- `./build-new-device.sh debug --install` builds and installs in one step.
+- If `adb install` keeps dropping the connection on an older device, use adb over the network
+  instead — see [Troubleshooting](#troubleshooting).
+- The app needs to be **charging** for motion detection and voice commands to run at all; on
+  battery it is just the clock over the rain.
+
+---
+
 ## Contents
 
+- [Quick start](#quick-start)
 - [Features](#features)
 - [Controls](#controls)
 - [Voice commands](#voice-commands)
@@ -138,7 +211,9 @@ and a clap or `matrix time` brings it back.
 
 ## Building
 
-Requirements: JDK 17, Android SDK with API 34, and `curl` + `unzip` on PATH.
+Requirements: JDK 17, Android SDK with API 34, and `curl` + `unzip` on PATH. Gradle finds the SDK
+through `local.properties` or `ANDROID_HOME` — see [Quick start](#quick-start). `local.properties`
+is machine-specific and gitignored, so a fresh clone needs one written locally.
 
 Two flavours exist because the two architectures need different speech engines. sherpa-onnx sounds
 far better, but its 32-bit build is still ~80 MB — almost all of it the ONNX runtime rather than the
