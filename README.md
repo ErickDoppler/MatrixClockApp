@@ -23,7 +23,7 @@ Pick the build that matches your device. If you are unsure, check with
 | Device | Script | APK |
 |---|---|---|
 | 64-bit, anything from the last decade | `build-new-device.sh` | ~132 MB |
-| 32-bit, `armeabi-v7a` only | `build-old-device.sh` | ~61 MB |
+| 32-bit, `armeabi-v7a` only | `build-old-device.sh` | ~70 MB |
 
 ### Windows
 
@@ -211,18 +211,20 @@ and a clap or `matrix time` brings it back.
 
 ## Building
 
-Requirements: JDK 17, Android SDK with API 34, and `curl` + `unzip` on PATH. Gradle finds the SDK
+Requirements: JDK 17, Android SDK with API 34, and `curl` + `unzip` + `tar` on PATH. The 32-bit
+build also compiles the Pico engine, so it needs the **Android NDK** (r26 or newer) installed in the
+SDK under `ndk/<version>`; nothing else uses native code. Gradle finds the SDK
 through `local.properties` or `ANDROID_HOME` — see [Quick start](#quick-start). `local.properties`
 is machine-specific and gitignored, so a fresh clone needs one written locally.
 
-Two flavours exist because the two architectures need different speech engines. sherpa-onnx sounds
-far better, but its 32-bit build is still ~80 MB — almost all of it the ONNX runtime rather than the
-voice — which would more than double the size of the 32-bit APK. So the legacy flavour carries
-eSpeak NG instead: robotic, but ~10 MB and it runs anywhere.
+Two flavours exist because the two architectures need different speech engines. A neural voice is
+much the most natural, but it cannot run on old hardware: on an LG G Pad 8.3 sherpa-onnx took three
+minutes to load its model and never produced any audio at all. So 64-bit builds get sherpa-onnx,
+and 32-bit builds get two light engines instead — Pico and RHVoice.
 
 ```bash
-./build-new-device.sh      # arm64-v8a,   ~133 MB, sherpa-onnx engine bundled
-./build-old-device.sh      # armeabi-v7a,  ~61 MB, eSpeak NG engine bundled
+./build-new-device.sh      # arm64-v8a,   ~133 MB, sherpa-onnx bundled
+./build-old-device.sh      # armeabi-v7a,  ~70 MB, Pico + RHVoice bundled
 ```
 
 Both scripts download any missing build assets first, so a fresh clone builds with no manual setup.
@@ -252,24 +254,26 @@ build scripts; it is idempotent, so anything already present is left alone.
 ```bash
 ./fetch-assets.sh          # Vosk model only
 ./fetch-assets.sh full     # also the arm64 sherpa-onnx engine
-./fetch-assets.sh legacy   # also the 32-bit eSpeak NG engine
+./fetch-assets.sh legacy   # also RHVoice and the Pico sources
 ```
 
 | Asset | Size | Destination | Needed by |
 |---|---|---|---|
 | Vosk small English model | ~39 MB download, 68 MB unpacked | `app/src/main/assets/model-en-us/` | both flavours |
-| sherpa-onnx TTS engine APK | ~80 MB | `app/src/full/assets/tts-engine.apk` | `full` only |
-| eSpeak NG TTS engine APK | ~10 MB | `app/src/legacy/assets/tts-engine.apk` | `legacy` only |
+| sherpa-onnx engine APK | ~80 MB | `app/src/full/assets/tts-engines/` | `full` only |
+| RHVoice engine APK | ~15 MB | `app/src/legacy/assets/tts-engines/` | `legacy` only |
+| SVOX Pico sources + 2 voices | ~12 MB download | `picotts/` (compiled by the build script) | `legacy` only |
 
 The Vosk model directory must contain `am/`, `conf/`, `graph/` and `ivector/`. Any other Vosk model
 works if you keep the same folder name — see [alphacephei.com/vosk/models](https://alphacephei.com/vosk/models).
 
-A TTS engine is bundled so a device with no speech engine of its own can install one entirely
-offline, from inside the app's settings screen. Which engine is decided per flavour by the
-`BUNDLED_TTS_PACKAGE` build-config field.
+Engines are bundled so a device with no speech engine of its own can install one entirely offline,
+from inside the app's settings screen. Each flavour simply carries whichever APKs suit its hardware
+in `assets/tts-engines/`, where the file name is the package name — adding an engine is a build-time
+matter needing no code change.
 
-If the file is absent the build still succeeds and runs: `TtsEngineInstaller.isBundled()` detects it
-at runtime and the settings screen simply hides the install option.
+If a file is absent the build still succeeds: the settings screen only offers engines it actually
+carries and that are not already installed.
 
 ---
 
@@ -313,7 +317,10 @@ needed either way. The rules compose in order:
   (sunrise/sunset and weather), internet (weather only). All are requested once at first launch and
   every feature degrades gracefully if denied.
 - **Speech output needs a TTS engine on the device.** Most phones ship one; if not, either build can
-  install its bundled engine from the settings screen — sherpa-onnx on arm64, eSpeak NG on 32-bit.
+  install a bundled engine from the settings screen — sherpa-onnx on 64-bit, Pico or RHVoice on 32-bit.
+- **Pico is the one to pick on old hardware.** It is entirely offline and needs no setup. RHVoice
+  sounds clearer still but wants one voice downloaded inside RHVoice first, and neural engines do
+  not work at all on hardware of that era.
 - **A device that never had an engine leaves `tts_default_synth` unset**, and in that state Android's
   no-engine `TextToSpeech` constructor fails to initialise even once an engine is installed. The app
   detects this and names an installed engine explicitly; a valid system default is always left alone.
@@ -369,7 +376,11 @@ app/src/main/java/com/example/matrixclock/
 └── voice/
     ├── VoiceCommands.kt     Vosk wake-word spotting
     ├── Speaker.kt           TextToSpeech wrapper
-    └── TtsEngineInstaller.kt Offers the bundled engine when none exists
+    └── TtsEngineInstaller.kt Offers the bundled engines when one is missing
+
+picotts/                     A small SVOX Pico speech engine, built for 32-bit devices
+├── src/main/cpp/            Pico C sources plus a JNI bridge (ndk-build)
+└── src/main/java/           TextToSpeechService that Android talks to
 ```
 
 ---
@@ -377,8 +388,9 @@ app/src/main/java/com/example/matrixclock/
 ## Credits and licences
 
 - [Vosk](https://alphacephei.com/vosk/) — offline speech recognition (Apache-2.0)
-- [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) — offline TTS engine, arm64 build (Apache-2.0)
-- [eSpeak NG](https://github.com/espeak-ng/espeak-ng) — offline TTS engine, 32-bit build (GPL-3.0)
+- [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) — offline neural TTS, 64-bit builds (Apache-2.0)
+- [SVOX Pico](https://github.com/ihuguet/picotts) — offline TTS compiled into the `picotts` module (Apache-2.0)
+- [RHVoice](https://github.com/RHVoice/RHVoice) — offline TTS, 32-bit builds (GPL-3.0)
 - [Open-Meteo](https://open-meteo.com/) — free weather API, no key required (CC-BY-4.0)
 - [CameraX](https://developer.android.com/training/camerax) — camera frame analysis (Apache-2.0)
 

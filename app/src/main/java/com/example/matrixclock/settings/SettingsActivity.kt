@@ -1,15 +1,18 @@
 package com.example.matrixclock.settings
 
 import android.app.Activity
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import com.example.matrixclock.R
 import com.example.matrixclock.voice.Speaker
 import com.example.matrixclock.voice.TtsEngineInstaller
@@ -45,6 +48,13 @@ class SettingsActivity : Activity() {
         bindVoiceControls()
 
         findViewById<Button>(R.id.doneButton).setOnClickListener { finish() }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Coming back from the system installer, one of these engines may now exist.
+        bindBundledEngineInstallers()
+        bindEngineSpinner()
     }
 
     override fun onDestroy() {
@@ -126,32 +136,68 @@ class SettingsActivity : Activity() {
             if (speaker.isReady) speaker.speakTime() else toast("No speech engine ready yet")
         }
 
-        findViewById<Button>(R.id.installEngineButton).apply {
-            // Only worth offering when this build carries the engine and it is not already there.
-            val offerInstall = TtsEngineInstaller.isBundled(this@SettingsActivity) &&
-                !TtsEngineInstaller.isBundledEngineInstalled(this@SettingsActivity)
-            visibility = if (offerInstall) View.VISIBLE else View.GONE
-            setOnClickListener {
-                if (!TtsEngineInstaller.promptInstall(this@SettingsActivity)) {
-                    toast("Could not open the installer")
-                }
-            }
-        }
+        bindBundledEngineInstallers()
 
         if (!TtsEngineInstaller.hasAnyEngine(this)) {
             findViewById<TextView>(R.id.voiceHint).text =
-                if (TtsEngineInstaller.isBundled(this)) {
-                    "This device has no speech engine. Install the bundled offline engine to hear " +
-                        "the time spoken; wake words work either way."
+                if (TtsEngineInstaller.bundledEngines(this).isNotEmpty()) {
+                    "This device has no speech engine. Install one of the bundled offline engines " +
+                        "below to hear announcements; wake words work either way."
                 } else {
-                    "This device has no speech engine, and this 32-bit build does not carry one. " +
-                        "Install any TTS engine to hear announcements; wake words work either way."
+                    "This device has no speech engine and this build carries none. Install any TTS " +
+                        "engine to hear announcements; wake words work either way."
                 }
         }
 
         // The voice list only exists once an engine has initialised.
         speaker.start { ready -> runOnUiThread { if (ready) bindVoiceSpinner() } }
     }
+
+    /**
+     * Adds an install button for every bundled engine the device does not already have.
+     *
+     * Rebuilt in [onResume] as well as here, so returning from the system installer removes the
+     * button for whatever was just installed.
+     */
+    private fun bindBundledEngineInstallers() {
+        val container = findViewById<LinearLayout>(R.id.installEngineContainer)
+        container.removeAllViews()
+
+        for (engine in TtsEngineInstaller.installableEngines(this)) {
+            val button = Button(this).apply {
+                text = getString(R.string.install_engine, engine.label)
+                setTextColor(ContextCompat.getColor(context, R.color.matrix_green))
+                typeface = Typeface.MONOSPACE
+                setBackgroundResource(R.drawable.matrix_control)
+                setPadding(paddingLeft, dp(14), paddingRight, dp(14))
+                setOnClickListener {
+                    if (!TtsEngineInstaller.promptInstall(this@SettingsActivity, engine.packageName)) {
+                        toast("Could not open the installer")
+                    }
+                }
+            }
+            container.addView(button, matchWidthWithTopMargin())
+
+            if (engine.note.isNotEmpty()) {
+                container.addView(
+                    TextView(this).apply {
+                        text = engine.note
+                        setTextColor(ContextCompat.getColor(context, R.color.matrix_green_dim))
+                        textSize = 12f
+                    },
+                    matchWidthWithTopMargin(topDp = 4)
+                )
+            }
+        }
+    }
+
+    private fun matchWidthWithTopMargin(topDp: Int = 12): LinearLayout.LayoutParams =
+        LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { topMargin = dp(topDp) }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     private fun bindEngineSpinner() {
         val installed = TtsEngineInstaller.installedEngines(this)

@@ -8,12 +8,12 @@
 # Usage:  ./fetch-assets.sh [full|legacy]
 #
 #   (no argument)  Vosk speech model only.
-#   full           Also the arm64 TTS engine  (sherpa-onnx, ~80 MB, high quality).
-#   legacy         Also the 32-bit TTS engine (eSpeak NG,   ~10 MB, robotic but tiny).
+#   full           Also the arm64 TTS engine (sherpa-onnx: natural neural voice, ~80 MB).
+#   legacy         Also RHVoice, plus the SVOX Pico sources that ./build-old-device.sh compiles.
 #
-# The two flavours carry different engines because sherpa-onnx's 32-bit build is still ~80 MB —
-# almost all of it the ONNX runtime rather than the voice — which would more than double the size
-# of the legacy APK. eSpeak NG is a fraction of that and runs anywhere.
+# Why the flavours differ: a neural engine is far and away the most natural, but it cannot run on
+# old hardware — on an LG G Pad 8.3 sherpa-onnx took three minutes to load and never produced any
+# audio. So 32-bit builds carry RHVoice and Pico, both of which are light enough to work there.
 #
 set -eu
 
@@ -24,11 +24,17 @@ VOSK_DIR="app/src/main/assets/model-en-us"
 
 # sherpa-onnx TTS engine, arm64, Piper en_GB voice. Apache-2.0.
 FULL_ENGINE_URL="https://huggingface.co/csukuangfj/sherpa-onnx-apk/resolve/main/tts-engine-2/sherpa-onnx-1.10.0-arm64-v8a-en-tts-engine-vits-piper-en_GB-alan-medium.apk"
-FULL_ENGINE_PATH="app/src/full/assets/tts-engine.apk"
+FULL_ENGINE_PATH="app/src/full/assets/tts-engines/com.k2fsa.sherpa.onnx.tts.engine.apk"
 
-# eSpeak NG, from F-Droid. Universal APK, includes armeabi-v7a. GPL-3.0.
-LEGACY_ENGINE_URL="https://f-droid.org/repo/com.reecedunn.espeak_22.apk"
-LEGACY_ENGINE_PATH="app/src/legacy/assets/tts-engine.apk"
+# RHVoice, from F-Droid. Universal APK. GPL-3.0. Voices are downloaded inside RHVoice itself.
+RHVOICE_URL="https://f-droid.org/repo/com.github.olga_yakovleva.rhvoice.android_118040.apk"
+RHVOICE_PATH="app/src/legacy/assets/tts-engines/com.github.olga_yakovleva.rhvoice.android.apk"
+
+# SVOX Pico, the synthesiser Android itself shipped for years. Apache-2.0. Compiled by
+# ./build-old-device.sh into a small engine APK; see the picotts module.
+PICO_SRC_URL="https://github.com/ihuguet/picotts/archive/refs/heads/master.tar.gz"
+PICO_CPP_DIR="picotts/src/main/cpp/pico"
+PICO_VOICE_DIR="picotts/src/main/assets/pico"
 
 FLAVOUR="${1:-}"
 
@@ -37,6 +43,7 @@ need() {
 }
 need curl
 need unzip
+need tar
 
 # Downloads to a temp file first, so an interrupted transfer cannot leave a broken asset behind.
 download_to() {
@@ -75,12 +82,40 @@ else
     echo "Vosk model installed at $VOSK_DIR"
 fi
 
-# ---- Bundled TTS engine, per flavour --------------------------------------------------------
+# ---- SVOX Pico sources (compiled into an engine APK by the legacy build) --------------------
+
+fetch_pico_sources() {
+    if [ -f "$PICO_CPP_DIR/picoapi.h" ] && [ -f "$PICO_VOICE_DIR/en-GB_ta.bin" ]; then
+        echo "Pico sources already present, skipping."
+        return 0
+    fi
+    echo "Downloading SVOX Pico sources (~12 MB)..."
+    _tmp=$(mktemp -d -t pico.XXXXXX)
+    curl -fL --retry 3 --progress-bar -o "$_tmp/pico.tar.gz" "$PICO_SRC_URL"
+    tar -xzf "$_tmp/pico.tar.gz" -C "$_tmp"
+
+    mkdir -p "$PICO_CPP_DIR" "$PICO_VOICE_DIR"
+    cp "$_tmp"/picotts-master/pico/lib/*.c "$_tmp"/picotts-master/pico/lib/*.h "$PICO_CPP_DIR/"
+    # Two English voices, about 1 MB each.
+    cp "$_tmp"/picotts-master/pico/lang/en-GB_ta.bin \
+       "$_tmp"/picotts-master/pico/lang/en-GB_kh0_sg.bin \
+       "$_tmp"/picotts-master/pico/lang/en-US_ta.bin \
+       "$_tmp"/picotts-master/pico/lang/en-US_lh0_sg.bin "$PICO_VOICE_DIR/"
+    rm -rf "$_tmp"
+    echo "Pico sources installed at $PICO_CPP_DIR"
+}
+
+# ---- Bundled TTS engines, per flavour -------------------------------------------------------
 
 case "$FLAVOUR" in
-    full)   download_to "$FULL_ENGINE_URL"   "$FULL_ENGINE_PATH"   "sherpa-onnx TTS engine (~80 MB)" ;;
-    legacy) download_to "$LEGACY_ENGINE_URL" "$LEGACY_ENGINE_PATH" "eSpeak NG TTS engine (~10 MB)" ;;
-    "")     ;;
+    full)
+        download_to "$FULL_ENGINE_URL" "$FULL_ENGINE_PATH" "sherpa-onnx TTS engine (~80 MB)"
+        ;;
+    legacy)
+        download_to "$RHVOICE_URL" "$RHVOICE_PATH" "RHVoice TTS engine (~15 MB)"
+        fetch_pico_sources
+        ;;
+    "") ;;
     *) echo "Unknown flavour '$FLAVOUR'. Use 'full' or 'legacy'." >&2; exit 2 ;;
 esac
 

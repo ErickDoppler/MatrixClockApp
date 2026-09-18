@@ -82,10 +82,12 @@
             style="@style/MatrixButton"
             android:text="@string/test_voice"/>
 
-        <Button
-            android:id="@+id/installEngineButton"
-            style="@style/MatrixButton"
-            android:text="@string/install_engine"/>
+        <!-- One button per bundled engine that is not installed yet, added at runtime. -->
+        <LinearLayout
+            android:id="@+id/installEngineContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
 
         <TextView
             android:id="@+id/voiceHint"
