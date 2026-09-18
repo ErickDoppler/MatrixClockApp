@@ -1,2 +1,3 @@
 rootProject.name = 'MatrixClockApp'
 include ':app'
+include ':picotts'

@@ -2,7 +2,9 @@ package com.example.matrixclock.voice
 
 import android.content.Context
 import android.provider.Settings as AndroidSettings
+import android.os.SystemClock
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.speech.tts.Voice
 import android.util.Log
 import com.example.matrixclock.settings.Settings
@@ -32,10 +34,13 @@ class Speaker(private val context: Context, private val settings: Settings) {
     fun start(onReady: (Boolean) -> Unit = {}) {
         if (tts != null) return
         val engine = resolveEngine()
+        val startedAt = SystemClock.elapsedRealtime()
         val listener = TextToSpeech.OnInitListener { status ->
             isReady = status == TextToSpeech.SUCCESS
             if (isReady) {
+                Log.i(TAG, "TTS ready in ${SystemClock.elapsedRealtime() - startedAt} ms")
                 applyVoiceSettings()
+                tts?.setOnUtteranceProgressListener(timingListener)
             } else {
                 Log.w(TAG, "TTS init failed (status=$status, engine=${engine ?: "system default"})")
             }
@@ -48,6 +53,30 @@ class Speaker(private val context: Context, private val settings: Settings) {
             TextToSpeech(context, listener, engine)
         }
     }
+
+    /**
+     * Logs how long each announcement takes to begin and to finish.
+     *
+     * The gap before audio starts is the number that matters on old hardware: a neural engine can
+     * sound far better than eSpeak and still be unusable if the device takes seconds to synthesise.
+     */
+    private val timingListener = object : UtteranceProgressListener() {
+        override fun onStart(utteranceId: String?) {
+            Log.i(TAG, "Audio started after ${SystemClock.elapsedRealtime() - requestedAt} ms")
+        }
+
+        override fun onDone(utteranceId: String?) {
+            Log.i(TAG, "Audio finished after ${SystemClock.elapsedRealtime() - requestedAt} ms")
+        }
+
+        @Deprecated("Deprecated in Java")
+        override fun onError(utteranceId: String?) {
+            Log.w(TAG, "Utterance failed after ${SystemClock.elapsedRealtime() - requestedAt} ms")
+        }
+    }
+
+    @Volatile
+    private var requestedAt = 0L
 
     /**
      * Which engine package to hand to [TextToSpeech], or null to let it use the system default.
@@ -108,6 +137,7 @@ class Speaker(private val context: Context, private val settings: Settings) {
             return
         }
         Log.i(TAG, "Speaking: $text")
+        requestedAt = SystemClock.elapsedRealtime()
         engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, UTTERANCE_ID)
     }
 

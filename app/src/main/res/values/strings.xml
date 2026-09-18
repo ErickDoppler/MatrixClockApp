@@ -21,7 +21,7 @@
     <string name="tts_voice">Voice</string>
     <string name="tts_rate">Voice speed</string>
     <string name="test_voice">Test voice</string>
-    <string name="install_engine">Install bundled offline engine</string>
+    <string name="install_engine">Install %1$s</string>
     <string name="voice_hint">Say \"time\" to hear the clock, \"matrix\" or \"code\" to hide it, or
         double clap to show it for a minute. Recognition runs offline.</string>
     <string name="done">Done</string>

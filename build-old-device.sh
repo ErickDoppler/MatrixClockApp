@@ -2,13 +2,13 @@
 #
 # Builds Matrix Clock for older 32-bit devices (armeabi-v7a), such as the LG G Pad 8.3.
 #
-# This is the "legacy" flavour. It bundles eSpeak NG rather than sherpa-onnx, because:
-#   - sherpa-onnx has no usable small 32-bit build: its armeabi-v7a engine is still ~80 MB, almost
-#     all of it the ONNX runtime rather than the voice.
-#   - eSpeak NG is ~10 MB, runs on 32-bit hardware, and needs no voice downloads.
+# This is the "legacy" flavour. It bundles two speech engines that are light enough for old
+# hardware, because a neural engine is not: on an LG G Pad 8.3, sherpa-onnx took three minutes to
+# load and never produced audio at all.
 #
-# The result is about 61 MB instead of 133 MB. eSpeak is robotic but perfectly intelligible, and
-# it works with no network at all.
+#   - Pico, compiled from SVOX sources by the picotts module. ~4 MB, entirely offline, and clearly
+#     smoother than eSpeak. Built here, then bundled as an asset.
+#   - RHVoice, ~15 MB. Clearer still, but one voice must be downloaded inside RHVoice afterwards.
 #
 # Usage:  ./build-old-device.sh [debug|release] [--install]
 #
@@ -25,10 +25,35 @@ esac
 
 cd "$(dirname "$0")"
 
-# Pull the Vosk model and the small eSpeak NG engine if they are not already here.
+# Pico is native code, so unlike the 64-bit build this one needs an NDK. Say so plainly rather than
+# letting Gradle fail several screens later with a CXX error.
+SDK_DIR=$(sed -n 's/^sdk\.dir=//p' local.properties 2>/dev/null | tr -d '\r')
+SDK_DIR="${SDK_DIR:-${ANDROID_HOME:-}}"
+if [ -z "$SDK_DIR" ] || [ ! -d "$SDK_DIR/ndk" ] || [ -z "$(ls -A "$SDK_DIR/ndk" 2>/dev/null)" ]; then
+    echo "The Android NDK is required to compile the Pico speech engine, and none was found." >&2
+    echo "Install one (r26 or newer) so it lands in <sdk>/ndk/<version>, for example with:" >&2
+    echo "    sdkmanager --install \"ndk;26.3.11579264\"" >&2
+    echo "Checked SDK location: ${SDK_DIR:-<unset>}" >&2
+    exit 1
+fi
+
+# Pull the Vosk model, RHVoice and the Pico sources if they are not already here.
 ./fetch-assets.sh legacy
 
-echo "Building armeabi-v7a ($BUILD_TYPE), with bundled eSpeak NG engine..."
+# Compile the Pico engine and bundle it alongside RHVoice, so the app can offer either.
+# The engine is a separate app, so a debug-signed build is fine and keeps it installable.
+echo "Compiling the Pico speech engine..."
+./gradlew :picotts:assembleDebug
+
+PICO_APK="picotts/build/outputs/apk/debug/picotts-debug.apk"
+if [ ! -f "$PICO_APK" ]; then
+    echo "Pico engine was not built at $PICO_APK" >&2
+    exit 1
+fi
+mkdir -p app/src/legacy/assets/tts-engines
+cp "$PICO_APK" app/src/legacy/assets/tts-engines/com.example.picotts.apk
+
+echo "Building armeabi-v7a ($BUILD_TYPE), with bundled Pico and RHVoice engines..."
 ./gradlew "$TASK"
 
 if [ ! -f "$OUT" ]; then
@@ -40,7 +65,7 @@ SIZE=$(ls -l "$OUT" | awk '{printf "%.1f MB", $5/1048576}')
 echo
 echo "APK:  $OUT  ($SIZE)"
 echo "ABI:  armeabi-v7a"
-echo "TTS:  eSpeak NG bundled (offered if the device has no engine)"
+echo "TTS:  Pico and RHVoice bundled (offered in Settings)"
 
 if [ "$INSTALL" = "--install" ]; then
     if [ "$BUILD_TYPE" = "release" ]; then

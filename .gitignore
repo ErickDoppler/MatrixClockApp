@@ -17,6 +17,9 @@ captures/
 # Large build assets — not in git. See README.md for how to fetch them.
 # Vosk speech model (~68 MB unpacked)
 app/src/main/assets/model-en-us/
-# Bundled TTS engines: sherpa-onnx for arm64 (~80 MB), eSpeak NG for 32-bit (~10 MB)
-app/src/full/assets/tts-engine.apk
-app/src/legacy/assets/tts-engine.apk
+# Bundled TTS engine APKs, fetched by fetch-assets.sh
+app/src/full/assets/tts-engines/
+app/src/legacy/assets/tts-engines/
+picotts/build/
+picotts/src/main/cpp/pico/
+picotts/src/main/assets/pico/
