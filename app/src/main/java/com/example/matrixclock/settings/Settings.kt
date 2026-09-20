@@ -9,6 +9,9 @@ import android.content.SharedPreferences
  * Values are held as plain properties so the render loop never touches disk; writes go through the
  * setters and notify [listener] so a running [com.example.matrixclock.MatrixView] can re-tune itself.
  */
+/** A place picked by hand in settings. */
+data class City(val name: String, val latitude: Double, val longitude: Double)
+
 class Settings(context: Context) {
 
     companion object {
@@ -22,6 +25,9 @@ class Settings(context: Context) {
         private const val KEY_TTS_VOICE = "tts_voice"
         private const val KEY_TTS_RATE = "tts_rate"
         private const val KEY_MOTION_ENABLED = "motion_enabled"
+        private const val KEY_CITY_NAME = "city_name"
+        private const val KEY_CITY_LAT = "city_latitude"
+        private const val KEY_CITY_LON = "city_longitude"
 
         const val GLYPH_SIZE_MIN = 8f
         const val GLYPH_SIZE_MAX = 40f
@@ -85,6 +91,34 @@ class Settings(context: Context) {
     var motionEnabled: Boolean
         get() = prefs.getBoolean(KEY_MOTION_ENABLED, true)
         set(value) = put { putBoolean(KEY_MOTION_ENABLED, value) }
+
+    /**
+     * A city chosen by hand, or null to use the device's own location.
+     *
+     * Stored because plenty of devices never get a location fix — a WiFi-only tablet on a shelf, or
+     * one with location switched off — and without coordinates there is no sunrise and no forecast.
+     */
+    val city: City?
+        get() {
+            val name = prefs.getString(KEY_CITY_NAME, null)
+            if (name.isNullOrEmpty()) return null
+            if (!prefs.contains(KEY_CITY_LAT) || !prefs.contains(KEY_CITY_LON)) return null
+            return City(name, prefs.getFloat(KEY_CITY_LAT, 0f).toDouble(), prefs.getFloat(KEY_CITY_LON, 0f).toDouble())
+        }
+
+    fun setCity(name: String, latitude: Double, longitude: Double) = put {
+        putString(KEY_CITY_NAME, name)
+        // Float is good to about a metre at these magnitudes, far finer than a forecast grid.
+        putFloat(KEY_CITY_LAT, latitude.toFloat())
+        putFloat(KEY_CITY_LON, longitude.toFloat())
+    }
+
+    /** Falls back to the device location again. */
+    fun clearCity() = put {
+        remove(KEY_CITY_NAME)
+        remove(KEY_CITY_LAT)
+        remove(KEY_CITY_LON)
+    }
 
     private inline fun put(edit: SharedPreferences.Editor.() -> Unit) {
         prefs.edit().apply(edit).apply()

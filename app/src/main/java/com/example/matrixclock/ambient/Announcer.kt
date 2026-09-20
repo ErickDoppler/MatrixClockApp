@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.example.matrixclock.settings.Settings
 import com.example.matrixclock.voice.Speaker
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -21,12 +22,15 @@ import kotlin.math.roundToInt
  * Builds and speaks the date and weather announcements.
  *
  * Everything that can be computed offline is: the date and the sunrise/sunset times need only a
- * last-known location, never a network round trip. Only the weather itself goes online, and only
- * when asked.
+ * position, never a network round trip. Only the weather itself goes online, and only when asked.
+ *
+ * The position is whichever city was chosen in settings, falling back to the device location. Many
+ * devices never produce a fix at all, so being able to name a city is what makes these work there.
  */
 class Announcer(
     private val context: Context,
-    private val speaker: Speaker
+    private val speaker: Speaker,
+    private val settings: Settings
 ) {
 
     private companion object {
@@ -43,20 +47,14 @@ class Announcer(
         // The sentence around it is English, so the date has to be too: on a device set to another
         // locale, Locale.getDefault() produced "Today is вівторок, 15 вересня".
         val dateText = SimpleDateFormat("EEEE, d MMMM", Locale.ENGLISH).format(Date(now))
-        val location = lastKnownLocation()
+        val here = where()
 
-        if (location == null) {
-            // Distinguish "not allowed" from "allowed but no fix yet" — they need different fixes.
-            val why = if (hasLocationPermission()) {
-                "I do not have a location fix yet."
-            } else {
-                "I need location access for sunrise and sunset."
-            }
-            speaker.speak("Today is $dateText. $why")
+        if (here == null) {
+            speaker.speak("Today is $dateText. ${noLocationReason()}")
             return
         }
 
-        val sun = SunTimes.calculate(location.latitude, location.longitude, now)
+        val sun = SunTimes.calculate(here.latitude, here.longitude, now)
         val sunrise = sun.sunriseMs?.let(::spokenClock)
         val sunset = sun.sunsetMs?.let(::spokenClock)
 
@@ -71,21 +69,17 @@ class Announcer(
 
     /** Current conditions from the network, plus whatever this device can measure itself. */
     fun announceWeather() {
-        val location = lastKnownLocation()
+        val here = where()
         // Read the onboard sensors regardless: they work with no network and no location.
         sensors.read { reading ->
-            if (location == null) {
+            if (here == null) {
                 val onboard = describeOnboard(reading)
-                val why = if (hasLocationPermission()) {
-                    "I do not have a location fix yet, so I cannot get the forecast."
-                } else {
-                    "I need location access for the forecast."
-                }
+                val why = noLocationReason()
                 speaker.speak(if (onboard.isEmpty()) why else "$why $onboard")
                 return@read
             }
             executor.execute {
-                val conditions = WeatherService.fetch(location.latitude, location.longitude)
+                val conditions = WeatherService.fetch(here.latitude, here.longitude)
                 val text = composeWeather(conditions, reading)
                 main.post { speaker.speak(text) }
             }
@@ -135,6 +129,29 @@ class Announcer(
     private fun hasLocationPermission(): Boolean =
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
+
+    /**
+     * Where to report for: the city chosen in settings if there is one, otherwise the device's own
+     * position.
+     *
+     * A hand-picked city wins outright, and needs neither the permission nor a fix — which is the
+     * whole point, since a WiFi-only tablet may never produce one.
+     */
+    private fun where(): Coordinates? {
+        settings.city?.let { return Coordinates(it.latitude, it.longitude) }
+        val fix = lastKnownLocation() ?: return null
+        return Coordinates(fix.latitude, fix.longitude)
+    }
+
+    private data class Coordinates(val latitude: Double, val longitude: Double)
+
+    /** Explains a missing position in terms of what the user can actually do about it. */
+    private fun noLocationReason(): String = when {
+        !hasLocationPermission() ->
+            "I have no city set and no location access. Pick a city in settings."
+        else ->
+            "I have no city set and no location fix yet. Pick a city in settings."
+    }
 
     private fun lastKnownLocation(): Location? {
         if (!hasLocationPermission()) return null

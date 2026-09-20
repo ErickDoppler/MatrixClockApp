@@ -2,6 +2,8 @@ package com.example.matrixclock.settings
 
 import android.app.Activity
 import android.graphics.Typeface
+import android.view.inputmethod.EditorInfo
+import android.widget.EditText
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
@@ -14,6 +16,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.example.matrixclock.R
+import com.example.matrixclock.ambient.Geocoder
 import com.example.matrixclock.voice.Speaker
 import com.example.matrixclock.voice.TtsEngineInstaller
 
@@ -27,6 +30,9 @@ class SettingsActivity : Activity() {
 
     private lateinit var settings: Settings
     private lateinit var speaker: Speaker
+
+    /** City lookups are network calls, so they run here rather than on the main thread. */
+    private val geocoding = java.util.concurrent.Executors.newSingleThreadExecutor()
 
     private var engines: List<EngineChoice> = emptyList()
     private var voices: List<VoiceChoice> = emptyList()
@@ -44,6 +50,7 @@ class SettingsActivity : Activity() {
         setContentView(R.layout.activity_settings)
 
         bindRainControls()
+        bindLocationControls()
         bindMotionControl()
         bindVoiceControls()
 
@@ -58,6 +65,7 @@ class SettingsActivity : Activity() {
     }
 
     override fun onDestroy() {
+        geocoding.shutdown()
         speaker.shutdown()
         super.onDestroy()
     }
@@ -100,6 +108,107 @@ class SettingsActivity : Activity() {
             current = settings.clockSize,
             format = { "%.0f%% of screen width".format(it * 100f) }
         ) { settings.clockSize = it }
+    }
+
+    // ---- Location --------------------------------------------------------------------------
+
+    /**
+     * Lets the user name a city instead of relying on a location fix.
+     *
+     * Plenty of devices never produce one — a WiFi-only tablet, or location switched off — and
+     * without coordinates there is no sunrise and no forecast. A named city also avoids needing the
+     * location permission at all.
+     */
+    private fun bindLocationControls() {
+        val input = findViewById<EditText>(R.id.cityInput)
+        val results = findViewById<LinearLayout>(R.id.cityResults)
+
+        renderCurrentCity()
+
+        findViewById<Button>(R.id.citySearchButton).setOnClickListener {
+            val query = input.text?.toString().orEmpty().trim()
+            if (query.isEmpty()) {
+                toast("Type a city name first")
+                return@setOnClickListener
+            }
+            searchCity(query, results)
+        }
+
+        // The keyboard's search key should do the same thing as the button.
+        input.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                findViewById<Button>(R.id.citySearchButton).performClick()
+                true
+            } else {
+                false
+            }
+        }
+
+        findViewById<Button>(R.id.cityClearButton).setOnClickListener {
+            settings.clearCity()
+            results.removeAllViews()
+            input.setText("")
+            renderCurrentCity()
+            toast("Using device location")
+        }
+    }
+
+    private fun renderCurrentCity() {
+        val label = findViewById<TextView>(R.id.cityCurrent)
+        val city = settings.city
+        label.text = if (city == null) {
+            getString(R.string.city_using_device)
+        } else {
+            getString(R.string.city_using, city.name)
+        }
+        findViewById<Button>(R.id.cityClearButton).visibility =
+            if (city == null) View.GONE else View.VISIBLE
+    }
+
+    private fun searchCity(query: String, results: LinearLayout) {
+        results.removeAllViews()
+        results.addView(hintLabel("Searching…"), matchWidthWithTopMargin(topDp = 8))
+
+        // Network work must not touch the main thread.
+        geocoding.execute {
+            val places = Geocoder.search(query)
+            runOnUiThread {
+                results.removeAllViews()
+                if (places.isEmpty()) {
+                    results.addView(
+                        hintLabel("No match for \"$query\". Check the spelling, or try a larger nearby city."),
+                        matchWidthWithTopMargin(topDp = 8)
+                    )
+                    return@runOnUiThread
+                }
+                for (place in places) {
+                    results.addView(
+                        matrixButton(place.label) {
+                            settings.setCity(place.label, place.latitude, place.longitude)
+                            results.removeAllViews()
+                            renderCurrentCity()
+                            toast("City set to ${place.name}")
+                        },
+                        matchWidthWithTopMargin(topDp = 8)
+                    )
+                }
+            }
+        }
+    }
+
+    private fun hintLabel(text: String): TextView = TextView(this).apply {
+        this.text = text
+        setTextColor(ContextCompat.getColor(context, R.color.matrix_green_dim))
+        textSize = 13f
+    }
+
+    private fun matrixButton(label: String, onClick: () -> Unit): Button = Button(this).apply {
+        text = label
+        setTextColor(ContextCompat.getColor(context, R.color.matrix_green))
+        typeface = Typeface.MONOSPACE
+        setBackgroundResource(R.drawable.matrix_control)
+        setPadding(paddingLeft, dp(12), paddingRight, dp(12))
+        setOnClickListener { onClick() }
     }
 
     private fun bindMotionControl() {
@@ -164,29 +273,15 @@ class SettingsActivity : Activity() {
         container.removeAllViews()
 
         for (engine in TtsEngineInstaller.installableEngines(this)) {
-            val button = Button(this).apply {
-                text = getString(R.string.install_engine, engine.label)
-                setTextColor(ContextCompat.getColor(context, R.color.matrix_green))
-                typeface = Typeface.MONOSPACE
-                setBackgroundResource(R.drawable.matrix_control)
-                setPadding(paddingLeft, dp(14), paddingRight, dp(14))
-                setOnClickListener {
-                    if (!TtsEngineInstaller.promptInstall(this@SettingsActivity, engine.packageName)) {
-                        toast("Could not open the installer")
-                    }
+            val button = matrixButton(getString(R.string.install_engine, engine.label)) {
+                if (!TtsEngineInstaller.promptInstall(this@SettingsActivity, engine.packageName)) {
+                    toast("Could not open the installer")
                 }
             }
             container.addView(button, matchWidthWithTopMargin())
 
             if (engine.note.isNotEmpty()) {
-                container.addView(
-                    TextView(this).apply {
-                        text = engine.note
-                        setTextColor(ContextCompat.getColor(context, R.color.matrix_green_dim))
-                        textSize = 12f
-                    },
-                    matchWidthWithTopMargin(topDp = 4)
-                )
+                container.addView(hintLabel(engine.note), matchWidthWithTopMargin(topDp = 4))
             }
         }
     }

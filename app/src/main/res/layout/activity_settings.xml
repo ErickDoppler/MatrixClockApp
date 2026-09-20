@@ -40,6 +40,44 @@
         <TextView android:id="@+id/clockSizeValue" style="@style/MatrixValue"/>
         <SeekBar android:id="@+id/clockSizeBar" style="@style/MatrixSeek"/>
 
+        <!-- Location -->
+        <TextView style="@style/MatrixSection" android:text="@string/section_location"/>
+
+        <TextView android:id="@+id/cityCurrent" style="@style/MatrixLabel"/>
+
+        <EditText
+            android:id="@+id/cityInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/matrix_control"
+            android:hint="@string/city_hint"
+            android:imeOptions="actionSearch"
+            android:inputType="textNoSuggestions|textCapWords"
+            android:maxLines="1"
+            android:padding="12dp"
+            android:textColor="@color/matrix_green"
+            android:textColorHint="@color/matrix_green_dim"/>
+
+        <Button
+            android:id="@+id/citySearchButton"
+            style="@style/MatrixButton"
+            android:text="@string/city_search"/>
+
+        <!-- Matches are listed here after a search, one button each. -->
+        <LinearLayout
+            android:id="@+id/cityResults"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
+
+        <Button
+            android:id="@+id/cityClearButton"
+            style="@style/MatrixButton"
+            android:text="@string/city_clear"/>
+
+        <TextView style="@style/MatrixHint" android:text="@string/city_help"/>
+
         <!-- Motion -->
         <TextView style="@style/MatrixSection" android:text="@string/section_motion"/>
 

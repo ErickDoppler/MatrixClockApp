@@ -176,10 +176,15 @@ phrase and whose lowest per-word confidence clears 0.85. Acting on partial resul
 are speculative hypotheses that get revised — caused ambient room noise to trigger commands. With
 the current gating a 150-second soak in a normal room produced zero false triggers.
 
-**Sunrise and sunset** are computed locally with the NOAA solar equations from a last-known
-location. No network and no API key. The implementation was checked against known values for
-London, New York, Sydney and Tromsø (including correct polar-day handling) and agrees to within a
-minute.
+**Position** comes from a city you pick in settings, or failing that the device's own location.
+Naming a city matters on anything that never gets a fix — a WiFi-only tablet, or location switched
+off — and it removes the need for the location permission entirely. City lookup uses Open-Meteo's
+geocoder, so duplicates like Springfield are disambiguated by region and country. Times are always
+spoken in the device's own time zone.
+
+**Sunrise and sunset** are computed locally with the NOAA solar equations from that position — no
+network and no API key. The implementation was checked against known values for London, New York,
+Sydney and Tromsø (including correct polar-day handling) and agrees to within a minute.
 
 **Weather** is the only feature that goes online, via [Open-Meteo](https://open-meteo.com/), which
 needs no API key or account. Onboard humidity, pressure and ambient-temperature sensors are read
@@ -200,6 +205,7 @@ immediately — there is nothing to save or cancel.
 | Glyph speed | 0.2×–3× | 1× |
 | Clock size | 4–25% of screen width | 10% |
 | Motion detection | on / off | on |
+| City | searched by name, or device location | device location |
 | Speech engine | any installed TTS engine | system default |
 | Voice | any voice in that engine | engine default |
 | Voice speed | 0.5×–2× | 1× |
