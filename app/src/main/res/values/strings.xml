@@ -4,6 +4,7 @@
     <string name="settings_title">MATRIX CLOCK // SETTINGS</string>
     <string name="section_rain">RAIN</string>
     <string name="section_clock">CLOCK</string>
+    <string name="section_location">LOCATION</string>
     <string name="section_motion">MOTION</string>
     <string name="section_voice">VOICE</string>
 
@@ -11,6 +12,14 @@
     <string name="glyph_density">Glyph density</string>
     <string name="glyph_speed">Glyph speed</string>
     <string name="clock_size">Clock size</string>
+    <string name="city_hint">Type a city, e.g. Kyiv</string>
+    <string name="city_search">Search for city</string>
+    <string name="city_clear">Use device location instead</string>
+    <string name="city_using_device">Using device location</string>
+    <string name="city_using">City: %1$s</string>
+    <string name="city_help">Sunrise, sunset and the weather need a position. Setting a city here
+        means they work even on a device that never gets a location fix, and no location permission
+        is needed. Times are still spoken in this device\&apos;s own time zone.</string>
 
     <string name="motion_enabled">Motion detection: %1$s</string>
     <string name="motion_hint">While charging, the front camera watches for movement and the clock

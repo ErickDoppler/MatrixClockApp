@@ -88,7 +88,7 @@ class MainActivity : ComponentActivity() {
         settings = Settings(this)
         policy = ClockPolicy()
         speaker = Speaker(this, settings)
-        announcer = Announcer(this, speaker)
+        announcer = Announcer(this, speaker, settings)
 
         matrixView = MatrixView(this, settings)
         matrixView.onSettingsRequested = { openSettings() }
